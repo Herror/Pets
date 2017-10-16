@@ -29,8 +29,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
+import com.example.android.pets.data.PetProvider;
 
 /**
  * Displays list of pets that were entered and stored in the app.
@@ -68,9 +70,6 @@ public class CatalogActivity extends AppCompatActivity {
 
     private void displayDatabaseInfo() {
 
-        // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
         //create the projection
         String[] projection = {
                 PetEntry._ID,
@@ -80,14 +79,16 @@ public class CatalogActivity extends AppCompatActivity {
                 PetEntry.COLUMN_PET_WEIGHT
         };
 
-        //create a cursor that will read the rows and columns from our table
-        Cursor cursor = db.query(PetEntry.TABLE_NAME,
-                projection,
-                null,
-                null,
-                null,
-                null,
-                null);
+        //Perform a query on the provider using the ContentResolver
+        //The Uri that we are using is the one from the PetContract.java class
+        //that will access the pet data
+        Cursor cursor = getContentResolver().query(
+                PetEntry.CONTENT_URI,   //The content URI of the pets table
+                projection,             //The columns to return for each row
+                null,                   //Selection criteria
+                null,                   //Selection criteria
+                null);                  //The sort order for the returned rows
+
         //Create a reference for the text_view_pet
         TextView displayView = (TextView) findViewById(R.id.text_view_pet);
         try {
