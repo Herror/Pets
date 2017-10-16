@@ -2,6 +2,7 @@ package com.example.android.pets.data;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
@@ -19,9 +20,28 @@ public class PetProvider extends ContentProvider {
     //Create a global variable for the DB helper class
     private PetDbHelper mDbHelper;
 
+    //Create integer variables that we'll use for the UriMatcher
+    private static final int PETS = 100;
+    private static final int PET_ID = 101;
+
+    //Create the UriMatcher object
+    private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+
+    static {
+        /**
+         * calls the addURI method and links it to the desired table with the desired
+         * UriMatcher variable
+         *(Authority, Table, Variable)
+         * /# means a specific row in the table
+         */
+        sUriMatcher.addURI(PetContract.CONTENT_AUTHORITY, PetContract.PATH_PETS, PETS);
+        sUriMatcher.addURI(PetContract.CONTENT_AUTHORITY, PetContract.PATH_PETS + "/#", PET_ID);
+
+    }
+
     @Override
     public boolean onCreate() {
-        //Create the PetDbHelper object
+        //Initialize the PetDbHelper object
         mDbHelper = new PetDbHelper(getContext());
         return true;
     }
