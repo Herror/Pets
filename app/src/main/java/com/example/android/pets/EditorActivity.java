@@ -17,6 +17,7 @@ package com.example.android.pets;
 
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -130,12 +131,8 @@ public class EditorActivity extends AppCompatActivity {
         //convert the String into an integer
         int weightInt = Integer.parseInt(weightString);
 
-        //Create an instance for the PetDbHelper class
-        PetDbHelper mDbHelper = new PetDbHelper(this);
 
-        // Create an object of the SQLiteDatabase class so we can write on it
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        //Create a new map of values
+        //Create a new map of values where column names are the keys
         ContentValues values = new ContentValues();
         //Add the values
         values.put(PetEntry.COLUMN_PET_NAME, nameString);
@@ -143,16 +140,16 @@ public class EditorActivity extends AppCompatActivity {
         values.put(PetEntry.COLUMN_PET_WEIGHT, weightInt);
         //The gender is already updating when the drop down option is selected
         values.put(PetEntry.COLUMN_PET_GENDER, mGender);
-        //insert a new row with the above info
-        long newRow = db.insert(PetEntry.TABLE_NAME, null, values);
+
+        // Insert a new pet into the provider, returning the content URI for the new pet.
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
 
         //Add a toast message to confirm that the pet was added successfully
-        //If it gives an error - it will return with -1
-        if (newRow == -1){
-            Toast toast = Toast.makeText(this, "Error with saving the pet" , Toast.LENGTH_SHORT);
+        if (newUri == null){
+            Toast toast = Toast.makeText(this, R.string.editor_insert_pet_fail , Toast.LENGTH_SHORT);
             toast.show();
         }else {
-            Toast toast = Toast.makeText(this, "Pet saved with id: " + newRow , Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(this, R.string.editor_insert_pet_successful, Toast.LENGTH_SHORT);
             toast.show();
         }
     }

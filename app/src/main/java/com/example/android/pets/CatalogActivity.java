@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -39,8 +40,6 @@ import com.example.android.pets.data.PetProvider;
  */
 public class CatalogActivity extends AppCompatActivity {
 
-    //create a instance variable for the DB helper
-    private PetDbHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +56,6 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-        // To access our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        mDbHelper = new PetDbHelper(this);
     }
 
     @Override
@@ -138,20 +134,18 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     private void insertPet(){
-        // Create an object of the SQLiteDatabase class so we can write on it
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        //Create a new map of values
+        //Create a new map of values where the column names are the keys
         ContentValues values = new ContentValues();
-
+        //Add the desired values for the dummy data
         values.put(PetEntry.COLUMN_PET_NAME, "Toto");
         values.put(PetEntry.COLUMN_PET_BREED, "Terrier");
         values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
         values.put(PetEntry.COLUMN_PET_WEIGHT, 7);
-        //Insert a new row with the above info
-        long newRowId = db.insert(PetEntry.TABLE_NAME, null, values);
 
-        Log.v("CatalogActivity", "New row ID " + newRowId);
-
+        //Insert a new row for Toto using the ContentProvider
+        //I use the @PetEntry.CONTENT_URI to indicate that I insert this to the pets table
+        //the newUri - will allow me to access the data in the future
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
     }
 
 
