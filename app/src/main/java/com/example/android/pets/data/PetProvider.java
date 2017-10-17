@@ -126,6 +126,21 @@ public class PetProvider extends ContentProvider {
      * for that specific row in the database.
      */
     private Uri insertPet(Uri uri, ContentValues values) {
+        //Check to see if the name is not null
+        String name = values.getAsString(PetEntry.COLUMN_PET_NAME);
+        if(name == null){
+            throw new IllegalArgumentException("Pet requires a name");
+        }
+        //Check to see if the gender is valid
+        Integer gender = values.getAsInteger(PetEntry.COLUMN_PET_GENDER);
+        if (gender == null || !PetEntry.isValidGender(gender)){
+            throw new IllegalArgumentException("Pet requires valid gender");
+        }
+        //if the weight is provided, check and see if it's greater or equal to 0kg
+        Integer weight = values.getAsInteger(PetEntry.COLUMN_PET_WEIGHT);
+        if(weight != null && weight < 0){
+            throw new IllegalArgumentException("Pet requires valid gender");
+        }
 
         // Create an object of the SQLiteDatabase class so we can write on it
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
