@@ -15,8 +15,11 @@
  */
 package com.example.android.pets;
 
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -29,6 +32,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import com.example.android.pets.data.PetContract;
@@ -36,17 +40,24 @@ import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
 import com.example.android.pets.data.PetProvider;
 
+import static com.example.android.pets.R.id.fab;
+
 /**
  * Displays list of pets that were entered and stored in the app.
  */
-public class CatalogActivity extends AppCompatActivity {
+public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    //Identifies a particular Loader being used in this component
+    private static final int PET_LOADER = 0;
+
+    //create a global variable for the adapter
+    PetCursorAdapter mPetCursorAdapter;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog);
-
         // Setup FAB to open EditorActivity
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -63,44 +74,18 @@ public class CatalogActivity extends AppCompatActivity {
         View emptyView = findViewById(R.id.empty_view);
         petListView.setEmptyView(emptyView);
 
+        //Setup the adapter to create a list item for each row of the pet data in the Cursor
+        //There is no pet data yet (until the loader finishes) so pass in null for Cursor
+        mPetCursorAdapter = new PetCursorAdapter(this, null);
+        petListView.setAdapter(mPetCursorAdapter);
+
+        //Initialize the CursorLoader. The URL_VALUE is eventually passed to the
+        //onCreateLoader()
+        getLoaderManager().initLoader(PET_LOADER, null, this);
+
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        displayDatabaseInfo();
-    }
-
-    private void displayDatabaseInfo() {
-
-        //create the projection
-        String[] projection = {
-                PetEntry._ID,
-                PetEntry.COLUMN_PET_NAME,
-                PetEntry.COLUMN_PET_BREED,
-                PetEntry.COLUMN_PET_GENDER,
-                PetEntry.COLUMN_PET_WEIGHT
-        };
-
-        //Perform a query on the provider using the ContentResolver
-        //The Uri that we are using is the one from the PetContract.java class
-        //that will access the pet data
-        Cursor cursor = getContentResolver().query(
-                PetEntry.CONTENT_URI,   //The content URI of the pets table
-                projection,             //The columns to return for each row
-                null,                   //Selection criteria
-                null,                   //Selection criteria
-                null);                  //The sort order for the returned rows
-
-        //Create a reference for the text_view_pet to populate it
-        ListView petListView = (ListView) findViewById(R.id.list_view_pet);
-        //Setup the cursor adapter using the above cursor
-        PetCursorAdapter petAdapter = new PetCursorAdapter(this, cursor);
-        //Attach the cursor adapter to the ListView
-        petListView.setAdapter(petAdapter);
-    }
-
-    private void insertPet(){
+    private void insertPet() {
         //Create a new map of values where the column names are the keys
         ContentValues values = new ContentValues();
         //Add the desired values for the dummy data
@@ -131,8 +116,6 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertPet();
-                //I use this so it will update right after I use the Insert Dummy Data option
-                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
@@ -140,5 +123,41 @@ public class CatalogActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderID, Bundle bundle) {
+        //create the projection to receive the desired information
+        //for this activity I will choose only the name and the breed
+        String[] projection = {
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED,
+        };
+
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+        return new CursorLoader(
+                this,                   //Parent activity
+                PetEntry.CONTENT_URI,   //The content URI of the pets table
+                projection,             //The columns to return for each row
+                null,                   //Selection criteria
+                null,                   //Selection criteria
+                null);                  //The sort order for the returned rows
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        // Swap the new cursor in.  (The framework will take care of closing the
+        // old cursor once we return.)
+        mPetCursorAdapter.swapCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // This is called when the last Cursor provided to onLoadFinished()
+        // above is about to be closed.  We need to make sure we are no
+        // longer using it.
+        mPetCursorAdapter.swapCursor(null);
     }
 }
