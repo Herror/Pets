@@ -16,6 +16,7 @@
 package com.example.android.pets;
 
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -31,6 +32,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
@@ -78,6 +80,25 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         //There is no pet data yet (until the loader finishes) so pass in null for Cursor
         mPetCursorAdapter = new PetCursorAdapter(this, null);
         petListView.setAdapter(mPetCursorAdapter);
+
+        //Setup item click listener to open up the a pet at the selected position from the
+        //ListView
+        petListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+                /**
+                 * Form the content URI that represents the specific pet that was clicked on,
+                 * by appending the "id" (passed as an input to this method) onto the
+                 * PetEntry.CONTENT_URI
+                 */
+                Uri currentPetUri = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id);
+                //set the URI on the data filed of the intent
+                intent.setData(currentPetUri);
+                //Launch the intent
+                startActivity(intent);
+            }
+        });
 
         //Initialize the CursorLoader. The URL_VALUE is eventually passed to the
         //onCreateLoader()
