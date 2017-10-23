@@ -72,4 +72,10 @@
 
     <!-- Subtitle text for the empty view that prompts the user to add a pet [CHAR LIMIT=50] -->
     <string name="empty_view_subtitle_text">Get started by adding a pet</string>
+
+    <!-- Toast message in the editor when a pet has been successfully updated -->
+    <string name="editor_update_pet_successful">Pet Updated</string>
+
+    <!-- Toast message in the editor when the update failed -->
+    <string name="editor_update_pet_fail">Failed updating the pet</string>
 </resources>

@@ -52,22 +52,18 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
      * EditText field to enter the pet's name
      */
     private EditText mNameEditText;
-
     /**
      * EditText field to enter the pet's breed
      */
     private EditText mBreedEditText;
-
     /**
      * EditText field to enter the pet's weight
      */
     private EditText mWeightEditText;
-
     /**
      * EditText field to enter the pet's gender
      */
     private Spinner mGenderSpinner;
-
     /**
      * Gender of the pet. The possible values are:
      * 0 for unknown gender, 1 for male, 2 for female.
@@ -99,11 +95,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             //if it contains it will update the information and it will change the
             //title to "Edit a pet"
             setTitle(getString(R.string.editor_activity_title_edit_pet));
+            // Initialize a loader to read the pet data from the database
+            // and display the current values in the editor
+            getLoaderManager().initLoader(EXISTING_PET_LOADER, null, this);
         }
-
-        // Initialize a loader to read the pet data from the database
-        // and display the current values in the editor
-        getLoaderManager().initLoader(EXISTING_PET_LOADER, null, this);
 
         // Find all relevant views that we will need to read user input from
         mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
@@ -156,7 +151,13 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     //Get the input from editor and save new pate into the database
 
-    private void insertPet() {
+    private void savePet() {
+
+        //Examine the intent that was used to launch this activity,
+        //in order to figure out if we're creating a new pet or editing an existing one
+        Intent intent = getIntent();
+        mCurrentPetUri = intent.getData();
+
         /**Because it is defined above in the OnCreate method - I can use only the mNameEditText
          * name variable
          * I then call the getText to get the imputed text and toString to set it to a string
@@ -168,8 +169,22 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String breedString = mBreedEditText.getText().toString().trim();
         //get the inserted weight
         String weightString = mWeightEditText.getText().toString().trim();
-        //convert the String into an integer
-        int weightInt = Integer.parseInt(weightString);
+
+        // Check if this is supposed to be a new pet
+        // and check if all the fields in the editor are blank
+        if(mCurrentPetUri == null &&
+                TextUtils.isEmpty(nameString) && TextUtils.isEmpty(breedString) &&
+                TextUtils.isEmpty(weightString) && mGender == PetEntry.GENDER_UNKNOWN){
+            return;
+        }
+
+        //If the weight is not provided by the user, don't try to parse the string into an
+        //integer value. Use 0 by default
+        int weight = 0;
+        if(!TextUtils.isEmpty(weightString)){
+            //convert the String into an integer
+            weight = Integer.parseInt(weightString);
+        }
 
 
         //Create a new map of values where column names are the keys
@@ -177,20 +192,37 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         //Add the values
         values.put(PetEntry.COLUMN_PET_NAME, nameString);
         values.put(PetEntry.COLUMN_PET_BREED, breedString);
-        values.put(PetEntry.COLUMN_PET_WEIGHT, weightInt);
+        values.put(PetEntry.COLUMN_PET_WEIGHT, weight);
         //The gender is already updating when the drop down option is selected
         values.put(PetEntry.COLUMN_PET_GENDER, mGender);
 
-        // Insert a new pet into the provider, returning the content URI for the new pet.
-        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+        //Check to see if the currentPetUri contains any data
+        if(mCurrentPetUri == null) {
 
-        //Add a toast message to confirm that the pet was added successfully
-        if (newUri == null) {
-            Toast toast = Toast.makeText(this, R.string.editor_insert_pet_fail, Toast.LENGTH_SHORT);
-            toast.show();
-        } else {
-            Toast toast = Toast.makeText(this, R.string.editor_insert_pet_successful, Toast.LENGTH_SHORT);
-            toast.show();
+            // Insert a new pet into the provider, returning the content URI for the new pet.
+            Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+
+            //Add a toast message to confirm that the pet was added successfully
+            if (newUri == null) {
+                Toast toast = Toast.makeText(this, R.string.editor_insert_pet_fail, Toast.LENGTH_SHORT);
+                toast.show();
+            } else {
+                Toast toast = Toast.makeText(this, R.string.editor_insert_pet_successful, Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        }else {
+            //If it's an existing pet, update the data. Pass in null for the selection and selection args
+            // because mCurrentPetUri will already identify the correct row in the database that
+            // we want to modify.
+            int rowsAffected = getContentResolver().update(mCurrentPetUri, values, null, null);
+            //Show a toast message depending on whether or not the update was successful
+            if(rowsAffected == 0){
+                //if no rows were affected, then there was an error with the update
+                Toast.makeText(this, getString(R.string.editor_update_pet_fail), Toast.LENGTH_SHORT).show();
+            }else {
+                //Otherwise, the update was successful and we can display the toast
+                Toast.makeText(this, getString(R.string.editor_update_pet_successful), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -209,7 +241,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
                 //Save pet into the database
-                insertPet();
+                savePet();
                 //Exit activity
                 finish();
                 return true;
