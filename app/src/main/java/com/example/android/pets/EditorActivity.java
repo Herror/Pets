@@ -83,9 +83,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private static final int EXISTING_PET_LOADER = 0;
 
     /**
-          * OnTouchListener that listens for any user touches on a View, implying that they are modifying
-          * the view, and we change the mPetHasChanged boolean to true.
-          */
+     * OnTouchListener that listens for any user touches on a View, implying that they are modifying
+     * the view, and we change the mPetHasChanged boolean to true.
+     */
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -109,6 +109,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             //if it doesn't contain, it will know that it will need to create a new pet
             //and add the title "Add a pet"
             setTitle(R.string.editor_activity_title_new_pet);
+            //Invalidate the option menu, so the "Delete" menu option can be hidden.
+            //It doesn't make sense to delete a pet that hasn't been created yet
+            invalidateOptionsMenu();
         } else {
             //if it contains it will update the information and it will change the
             //title to "Edit a pet"
@@ -196,16 +199,16 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
         // Check if this is supposed to be a new pet
         // and check if all the fields in the editor are blank
-        if(mCurrentPetUri == null &&
+        if (mCurrentPetUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(breedString) &&
-                TextUtils.isEmpty(weightString) && mGender == PetEntry.GENDER_UNKNOWN){
+                TextUtils.isEmpty(weightString) && mGender == PetEntry.GENDER_UNKNOWN) {
             return;
         }
 
         //If the weight is not provided by the user, don't try to parse the string into an
         //integer value. Use 0 by default
         int weight = 0;
-        if(!TextUtils.isEmpty(weightString)){
+        if (!TextUtils.isEmpty(weightString)) {
             //convert the String into an integer
             weight = Integer.parseInt(weightString);
         }
@@ -221,7 +224,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         values.put(PetEntry.COLUMN_PET_GENDER, mGender);
 
         //Check to see if the currentPetUri contains any data
-        if(mCurrentPetUri == null) {
+        if (mCurrentPetUri == null) {
 
             // Insert a new pet into the provider, returning the content URI for the new pet.
             Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
@@ -234,16 +237,16 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 Toast toast = Toast.makeText(this, R.string.editor_insert_pet_successful, Toast.LENGTH_SHORT);
                 toast.show();
             }
-        }else {
+        } else {
             //If it's an existing pet, update the data. Pass in null for the selection and selection args
             // because mCurrentPetUri will already identify the correct row in the database that
             // we want to modify.
             int rowsAffected = getContentResolver().update(mCurrentPetUri, values, null, null);
             //Show a toast message depending on whether or not the update was successful
-            if(rowsAffected == 0){
+            if (rowsAffected == 0) {
                 //if no rows were affected, then there was an error with the update
                 Toast.makeText(this, getString(R.string.editor_update_pet_fail), Toast.LENGTH_SHORT).show();
-            }else {
+            } else {
                 //Otherwise, the update was successful and we can display the toast
                 Toast.makeText(this, getString(R.string.editor_update_pet_successful), Toast.LENGTH_SHORT).show();
             }
@@ -255,6 +258,21 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         // Inflate the menu options from the res/menu/menu_editor.xml file.
         // This adds menu items to the app bar.
         getMenuInflater().inflate(R.menu.menu_editor, menu);
+        return true;
+    }
+
+    /**
+     * This method is called after invalidateOptionsMenu(), so that the
+     * menu can be updated (some menu items can be hidden or made visible).
+     */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        //If this is a new pet, hide the "Delete" menu item
+        if (mCurrentPetUri == null) {
+            MenuItem menuItem = menu.findItem(R.id.action_delete);
+            menuItem.setVisible(false);
+        }
         return true;
     }
 
@@ -277,7 +295,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             case android.R.id.home:
                 //If the pet hasn't changed, continue with navigating up the parent activity
                 //which is the CatalogActivity
-                if(!mPetHasChanged){
+                if (!mPetHasChanged) {
                     NavUtils.navigateUpFromSameTask(EditorActivity.this);
                     return true;
                 }
@@ -292,7 +310,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                                 NavUtils.navigateUpFromSameTask(EditorActivity.this);
                             }
                         };
-                        //show dialog that notifies the user they have unsaved changes
+                //show dialog that notifies the user they have unsaved changes
                 showUnsavedChangesDialog(discardButtonClickListener);
                 return true;
         }
@@ -349,7 +367,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Gender is a dropdown spinner, so map the constant value from the database
             // into one of the dropdown options (0 is Unknown, 1 is Male, 2 is Female).
             // Then call setSelection() so that option is displayed on screen as the current selection.
-            switch (gender){
+            switch (gender) {
                 case PetEntry.GENDER_MALE:
                     mGenderSpinner.setSelection(1);
                     break;
@@ -374,14 +392,14 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     /**
-          * Show a dialog that warns the user there are unsaved changes that will be lost
-          * if they continue leaving the editor.
-          *
-          * @param discardButtonClickListener is the click listener for what to do when
-          *                                   the user confirms they want to discard their changes
-          */
+     * Show a dialog that warns the user there are unsaved changes that will be lost
+     * if they continue leaving the editor.
+     *
+     * @param discardButtonClickListener is the click listener for what to do when
+     *                                   the user confirms they want to discard their changes
+     */
     private void showUnsavedChangesDialog(
-            DialogInterface.OnClickListener discardButtonClickListener){
+            DialogInterface.OnClickListener discardButtonClickListener) {
         // Create an AlertDialog.Builder and set the message, and click listeners
         // for the positive and negative buttons on the dialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -392,7 +410,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             public void onClick(DialogInterface dialogInterface, int i) {
                 //User click the "Keep editing" button, so dismiss the dialog
                 //and continue editing the pet
-                if(dialogInterface != null){
+                if (dialogInterface != null) {
                     dialogInterface.dismiss();
                 }
             }
