@@ -442,6 +442,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         showUnsavedChangesDialog(discardButtonClickListener);
     }
 
+    //Show a confirmation dialog to make sure that the user really want to delete a pet
     private void showDeleteConfirmationDialog() {
         // Create an AlertDialog.Builder and set the message, and click listeners
         // for the positive and negative buttons on the dialog.
